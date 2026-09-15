@@ -75,6 +75,7 @@ use enum_map::{Enum, EnumMap};
 use itertools::Itertools;
 use num_traits::Zero;
 
+use crate::alphabets::dna::iupac_mask;
 use crate::stats::pairhmm::homopolypairhmm::State::*;
 use crate::stats::pairhmm::{
     Emission, EmissionParameters, GapParameters, StartEndGapParameters, XYEmission,
@@ -107,10 +108,10 @@ pub enum State {
 impl State {
     fn supports(&self, x: u8, y: u8) -> bool {
         match self {
-            MatchA if x == b'A' || y == b'A' => true,
-            MatchC if x == b'C' || y == b'C' => true,
-            MatchG if x == b'G' || y == b'G' => true,
-            MatchT if x == b'T' || y == b'T' => true,
+            // For each match state, check if the base of the match state is supported by the IUPAC mask of x and y.
+            MatchA | MatchC | MatchG | MatchT => {
+                iupac_mask(self.base().unwrap()) & (iupac_mask(x) | iupac_mask(y)) != 0
+            }
             _ => false,
         }
     }

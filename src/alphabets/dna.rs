@@ -92,6 +92,31 @@ where
         .collect()
 }
 
+/// Bit mask of the bases an IUPAC code can denote. 
+pub fn iupac_mask(a: u8) -> u8 {
+    const A: u8 = 0b0001;
+    const C: u8 = 0b0010;
+    const G: u8 = 0b0100;
+    const T: u8 = 0b1000;
+    match a.to_ascii_uppercase() {
+        b'A' => A,
+        b'C' => C,
+        b'G' => G,
+        b'T' | b'U' => T,
+        b'R' => A | G,
+        b'Y' => C | T,
+        b'S' => C | G,
+        b'W' => A | T,
+        b'K' => G | T,
+        b'M' => A | C,
+        b'B' => C | G | T,
+        b'D' => A | G | T,
+        b'H' => A | C | T,
+        b'V' => A | C | G,
+        b'N' => A | C | G | T,
+        _ => 0,
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
