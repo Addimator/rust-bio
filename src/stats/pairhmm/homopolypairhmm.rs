@@ -822,6 +822,32 @@ mod tests {
     static EXTEND_GAPS_NO_HOPS_PHMM: LazyLock<HomopolyPairHMM> =
         LazyLock::new(|| HomopolyPairHMM::new(&EXTEND_GAP_PARAMS, &NO_HOP_PARAMS));
 
+    /// Match states supporting the pair `(x, y)`
+    fn supporting(x: u8, y: u8) -> Vec<State> {
+        MATCH_STATES
+            .iter()
+            .copied()
+            .filter(|m| m.supports(x, y))
+            .collect()
+    }
+
+    #[test]
+    fn supports_unambiguous_bases() {
+        assert_eq!(supporting(b'A', b'A'), [MatchA]);
+        assert_eq!(supporting(b'A', b'G'), [MatchA, MatchG]);
+        assert_eq!(supporting(b'T', b'C'), [MatchC, MatchT]);
+    }
+
+    #[test]
+    fn supports_ambiguous_codes() {
+        assert_eq!(supporting(b'R', b'C'), [MatchA, MatchC, MatchG]);
+        assert_eq!(supporting(b'Y', b'C'), [MatchC, MatchT]);
+        assert_eq!(supporting(b'S', b'S'), [MatchC, MatchG]);
+        assert_eq!(supporting(b'N', b'A'), [MatchA, MatchC, MatchG, MatchT]);
+        assert_eq!(supporting(b'R', b'Y'), [MatchA, MatchC, MatchG, MatchT]);
+        assert_eq!(supporting(b'r', b'c'), supporting(b'R', b'C'));
+    }
+
     #[test]
     fn impossible_global_alignment() {
         let x = b"AAA".to_vec();

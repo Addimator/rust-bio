@@ -92,7 +92,7 @@ where
         .collect()
 }
 
-/// Bit mask of the bases an IUPAC code can denote. 
+/// Bit mask of the bases an IUPAC code can denote.
 pub fn iupac_mask(a: u8) -> u8 {
     const A: u8 = 0b0001;
     const C: u8 = 0b0010;
@@ -102,7 +102,7 @@ pub fn iupac_mask(a: u8) -> u8 {
         b'A' => A,
         b'C' => C,
         b'G' => G,
-        b'T' | b'U' => T,
+        b'T' => T,
         b'R' => A | G,
         b'Y' => C | T,
         b'S' => C | G,
@@ -139,5 +139,37 @@ mod tests {
     #[test]
     fn number_is_no_word() {
         assert!(!alphabet().is_word(b"42"));
+    }
+
+    const IUPAC_CODES: [(u8, u8); 15] = [
+        (b'A', 0b0001),
+        (b'C', 0b0010),
+        (b'G', 0b0100),
+        (b'T', 0b1000),
+        (b'R', 0b0101), // A | G = 0001 | 0100
+        (b'Y', 0b1010), // C | T = 0010 | 1000
+        (b'S', 0b0110), // C | G
+        (b'W', 0b1001), // A | T
+        (b'K', 0b1100), // G | T
+        (b'M', 0b0011), // A | C
+        (b'B', 0b1110), // C | G | T
+        (b'D', 0b1101), // A | G | T
+        (b'H', 0b1011), // A | C | T
+        (b'V', 0b0111), // A | C | G
+        (b'N', 0b1111), // A | C | G | T
+    ];
+
+    #[test]
+    fn iupac_mask_is_the_union_of_the_denoted_bases() {
+        for (code, expected) in IUPAC_CODES {
+            assert_eq!(iupac_mask(code), expected);
+        }
+    }
+
+    #[test]
+    fn iupac_mask_of_unknown_symbol_is_zero() {
+        for symbol in [b'Z', b'-', b'*', b' ', 0, 255] {
+            assert_eq!(iupac_mask(symbol), 0);
+        }
     }
 }
