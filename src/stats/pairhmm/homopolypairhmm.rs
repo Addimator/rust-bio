@@ -116,6 +116,11 @@ impl State {
         }
     }
 
+    fn supports_base(&self, symbol: u8) -> bool {
+        self.base()
+            .is_some_and(|base| iupac_mask(base) & iupac_mask(symbol) != 0)
+    }
+
     fn base(&self) -> Option<u8> {
         match self {
             MatchA | HopAX | HopAY => Some(b'A'),
@@ -349,8 +354,12 @@ impl HomopolyPairHMM {
                     );
 
                 MATCH_HOP_Y.iter().for_each(|&(m, h)| {
-                    v[curr][h][j_] = (transition_probs[&(m >> h)] + v[prev][m][j_])
-                        .ln_add_exp(transition_probs[&(h >> h)] + v[prev][h][j_])
+                    v[curr][h][j_] = if h.supports_base(emission_x) {
+                        (transition_probs[&(m >> h)] + v[prev][m][j_])
+                            .ln_add_exp(transition_probs[&(h >> h)] + v[prev][h][j_])
+                    } else {
+                        LogProb::zero()
+                    }
                 });
 
                 v[curr][GapX][j_] = emission_params.prob_emit_y(j)
@@ -365,8 +374,12 @@ impl HomopolyPairHMM {
                     );
 
                 MATCH_HOP_X.iter().for_each(|&(m, h)| {
-                    v[curr][h][j_] = (transition_probs[&(m >> h)] + v[curr][m][j_minus_one])
-                        .ln_add_exp(transition_probs[&(h >> h)] + v[curr][h][j_minus_one])
+                    v[curr][h][j_] = if h.supports_base(emission_y) {
+                        (transition_probs[&(m >> h)] + v[curr][m][j_minus_one])
+                            .ln_add_exp(transition_probs[&(h >> h)] + v[curr][h][j_minus_one])
+                    } else {
+                        LogProb::zero()
+                    };
                 });
 
                 // calculate minimal number of mismatches
